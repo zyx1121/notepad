@@ -1,18 +1,33 @@
-'use client';
+"use client";
 
-import { db } from '@/lib/firebase';
-import { doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
-import { use, useEffect, useState } from 'react';
+import { db } from "@/lib/firebase";
+import { doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
+import { use, useEffect, useState } from "react";
 
-export default function Notepad({ params }: { params: Promise<{ notepad: string }> }) {
-  const [content, setContent] = useState('');
+const placeholder = `# Welcome to Notepad! ✨
+
+A simple, real-time collaborative notepad:
+• Auto-saves as you type
+• Real-time sync across devices
+• Share URL to collaborate
+• No login required
+
+Start typing...
+`;
+
+export default function Notepad({
+  params,
+}: {
+  params: Promise<{ notepad: string }>;
+}) {
+  const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
   const { notepad: notepadId } = use(params);
 
   useEffect(() => {
     const loadNotepad = async () => {
       try {
-        const noteRef = doc(db, 'notepads', notepadId);
+        const noteRef = doc(db, "notepads", notepadId);
         const noteSnap = await getDoc(noteRef);
 
         if (noteSnap.exists()) {
@@ -20,15 +35,15 @@ export default function Notepad({ params }: { params: Promise<{ notepad: string 
         } else {
           try {
             await setDoc(noteRef, {
-              content: '',
+              content: "",
               createdAt: new Date(),
             });
           } catch (error) {
-            console.error('Create notepad error:', error);
+            console.error("Create notepad error:", error);
           }
         }
       } catch (error) {
-        console.error('Read notepad error:', error);
+        console.error("Read notepad error:", error);
       } finally {
         setLoading(false);
       }
@@ -37,29 +52,31 @@ export default function Notepad({ params }: { params: Promise<{ notepad: string 
     loadNotepad();
 
     const unsubscribe = onSnapshot(
-      doc(db, 'notepads', notepadId),
+      doc(db, "notepads", notepadId),
       (doc) => {
         if (doc.exists()) {
           setContent(doc.data().content);
         }
       },
       (error) => {
-        console.error('Listen notepad error:', error);
-      }
+        console.error("Listen notepad error:", error);
+      },
     );
 
     return () => unsubscribe();
   }, [notepadId]);
 
-  const handleContentChange = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleContentChange = async (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
     const newContent = e.target.value;
     setContent(newContent);
 
     try {
-      const notepadRef = doc(db, 'notepads', notepadId);
+      const notepadRef = doc(db, "notepads", notepadId);
       await setDoc(notepadRef, { content: newContent }, { merge: true });
     } catch (error) {
-      console.error('Update content error:', error);
+      console.error("Update content error:", error);
     }
   };
 
@@ -68,10 +85,10 @@ export default function Notepad({ params }: { params: Promise<{ notepad: string 
   return (
     <main className="h-dvh w-dvw p-4">
       <textarea
-        className="w-full h-full p-4 bg-transparent border rounded-lg resize-none focus:outline-none"
+        className="h-full w-full resize-none rounded-lg bg-transparent p-4 focus:outline-none"
         value={content}
         onChange={handleContentChange}
-        placeholder="Typing..."
+        placeholder={placeholder}
       />
     </main>
   );
